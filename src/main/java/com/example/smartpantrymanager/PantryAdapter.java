@@ -4,10 +4,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
+import android.content.Intent;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.List;
 
 public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryViewHolder> {
@@ -30,7 +32,6 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
 
     @Override
     public void onBindViewHolder(@NonNull PantryViewHolder holder, int position) {
-
         PantryItem item = pantryItems.get(position);
 
         holder.txtIngredientName.setText(item.getName());
@@ -46,6 +47,39 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
                     "Expiry date: " + item.getExpiryDate()
             );
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), AddIngredientActivity.class);
+            intent.putExtra("ingredient_id", item.getId());
+            v.getContext().startActivity(intent);
+        });
+
+        holder.btnDeleteIngredient.setOnClickListener(v -> {
+
+            new AlertDialog.Builder(v.getContext())
+                    .setTitle("Delete Ingredient")
+                    .setMessage("Are you sure you want to delete " + item.getName() + "?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+
+                        DatabaseHelper databaseHelper =
+                                new DatabaseHelper(v.getContext());
+
+                        SQLiteDatabase database =
+                                databaseHelper.getWritableDatabase();
+
+                        database.delete(
+                                "pantry",
+                                "id = ?",
+                                new String[]{String.valueOf(item.getId())}
+                        );
+
+                        pantryItems.remove(position);
+                        notifyItemRemoved(position);
+                        notifyItemRangeChanged(position, pantryItems.size());
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
     }
 
     @Override
@@ -58,6 +92,7 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
         TextView txtIngredientName;
         TextView txtIngredientQuantity;
         TextView txtIngredientExpiry;
+        android.widget.Button btnDeleteIngredient;
 
         public PantryViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -65,6 +100,7 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
             txtIngredientName = itemView.findViewById(R.id.txtIngredientName);
             txtIngredientQuantity = itemView.findViewById(R.id.txtIngredientQuantity);
             txtIngredientExpiry = itemView.findViewById(R.id.txtIngredientExpiry);
+            btnDeleteIngredient = itemView.findViewById(R.id.btnDeleteIngredient);
         }
     }
 }
