@@ -40,9 +40,19 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
 
         holder.txtRecipeName.setText(recipe.getName());
 
-        holder.txtRecipeInstructions.setText(
-                recipe.getInstructions()
-        );
+        if (!recipe.getMissingIngredient().isEmpty()) {
+
+            holder.txtRecipeInstructions.setText(
+                    "Missing: " +
+                            recipe.getMissingIngredient()
+            );
+
+        } else {
+
+            holder.txtRecipeInstructions.setText(
+                    recipe.getInstructions()
+            );
+        }
 
         holder.itemView.setOnClickListener(v -> {
 

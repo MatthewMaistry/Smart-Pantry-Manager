@@ -102,6 +102,200 @@ public class RecipeMatcher {
         return true;
     }
 
+    public boolean isAlmostThere(int recipeId) {
+
+        Cursor recipeIngredients = database.rawQuery(
+                "SELECT ingredient_name, required_quantity, unit " +
+                        "FROM recipe_ingredients " +
+                        "WHERE recipe_id = ?",
+                new String[]{String.valueOf(recipeId)}
+        );
+
+        if (!recipeIngredients.moveToFirst()) {
+            recipeIngredients.close();
+            return false;
+        }
+
+        int missingIngredients = 0;
+
+        do {
+
+            String requiredIngredient =
+                    recipeIngredients.getString(
+                            recipeIngredients.getColumnIndexOrThrow(
+                                    "ingredient_name"
+                            )
+                    );
+
+            double requiredQuantity =
+                    recipeIngredients.getDouble(
+                            recipeIngredients.getColumnIndexOrThrow(
+                                    "required_quantity"
+                            )
+                    );
+
+            String requiredUnit =
+                    recipeIngredients.getString(
+                            recipeIngredients.getColumnIndexOrThrow(
+                                    "unit"
+                            )
+                    );
+
+            Cursor pantryIngredients = database.rawQuery(
+                    "SELECT quantity, unit FROM pantry " +
+                            "WHERE LOWER(name) = LOWER(?)",
+                    new String[]{requiredIngredient}
+            );
+
+            double totalAvailable = 0;
+
+            if (pantryIngredients.moveToFirst()) {
+
+                do {
+
+                    double pantryQuantity =
+                            pantryIngredients.getDouble(
+                                    pantryIngredients.getColumnIndexOrThrow(
+                                            "quantity"
+                                    )
+                            );
+
+                    String pantryUnit =
+                            pantryIngredients.getString(
+                                    pantryIngredients.getColumnIndexOrThrow(
+                                            "unit"
+                                    )
+                            );
+
+                    double convertedQuantity =
+                            convertQuantity(
+                                    pantryQuantity,
+                                    pantryUnit,
+                                    requiredUnit,
+                                    requiredIngredient
+                            );
+
+                    totalAvailable += convertedQuantity;
+
+                } while (pantryIngredients.moveToNext());
+            }
+
+            pantryIngredients.close();
+
+            // This ingredient is missing or there is not enough.
+            if (totalAvailable < requiredQuantity) {
+
+                missingIngredients++;
+
+                // More than one missing ingredient means
+                // this recipe is not "Almost There".
+                if (missingIngredients > 1) {
+
+                    recipeIngredients.close();
+                    return false;
+                }
+            }
+
+        } while (recipeIngredients.moveToNext());
+
+        recipeIngredients.close();
+
+        // Exactly one ingredient must be missing.
+        return missingIngredients == 1;
+    }
+
+    public String getMissingIngredient(int recipeId) {
+
+        Cursor recipeIngredients = database.rawQuery(
+                "SELECT ingredient_name, required_quantity, unit " +
+                        "FROM recipe_ingredients " +
+                        "WHERE recipe_id = ?",
+                new String[]{String.valueOf(recipeId)}
+        );
+
+        if (!recipeIngredients.moveToFirst()) {
+            recipeIngredients.close();
+            return "";
+        }
+
+        do {
+
+            String requiredIngredient =
+                    recipeIngredients.getString(
+                            recipeIngredients.getColumnIndexOrThrow(
+                                    "ingredient_name"
+                            )
+                    );
+
+            double requiredQuantity =
+                    recipeIngredients.getDouble(
+                            recipeIngredients.getColumnIndexOrThrow(
+                                    "required_quantity"
+                            )
+                    );
+
+            String requiredUnit =
+                    recipeIngredients.getString(
+                            recipeIngredients.getColumnIndexOrThrow(
+                                    "unit"
+                            )
+                    );
+
+            Cursor pantryIngredients = database.rawQuery(
+                    "SELECT quantity, unit FROM pantry " +
+                            "WHERE LOWER(name) = LOWER(?)",
+                    new String[]{requiredIngredient}
+            );
+
+            double totalAvailable = 0;
+
+            if (pantryIngredients.moveToFirst()) {
+
+                do {
+
+                    double pantryQuantity =
+                            pantryIngredients.getDouble(
+                                    pantryIngredients.getColumnIndexOrThrow(
+                                            "quantity"
+                                    )
+                            );
+
+                    String pantryUnit =
+                            pantryIngredients.getString(
+                                    pantryIngredients.getColumnIndexOrThrow(
+                                            "unit"
+                                    )
+                            );
+
+                    double convertedQuantity =
+                            convertQuantity(
+                                    pantryQuantity,
+                                    pantryUnit,
+                                    requiredUnit,
+                                    requiredIngredient
+                            );
+
+                    totalAvailable += convertedQuantity;
+
+                } while (pantryIngredients.moveToNext());
+            }
+
+            pantryIngredients.close();
+
+            if (totalAvailable < requiredQuantity) {
+
+                recipeIngredients.close();
+
+                return requiredIngredient;
+            }
+
+        } while (recipeIngredients.moveToNext());
+
+        recipeIngredients.close();
+
+        return "";
+    }
+
     private double convertQuantity(
             double quantity,
             String fromUnit,

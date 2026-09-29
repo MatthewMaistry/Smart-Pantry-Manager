@@ -10,28 +10,21 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Suggested Recipes"
+        android:text="Almost There"
         android:textSize="28sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
 
     <TextView
-        android:id="@+id/txtNoRecipes"
+        android:id="@+id/txtAlmostThereInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Recipes you can make with your current pantry:"
+        android:text="Recipes that are missing only one ingredient:"
         android:textSize="16sp"
         android:layout_marginBottom="16dp" />
 
-    <Button
-        android:id="@+id/btnAlmostThere"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="View Almost There Recipes"
-        android:layout_marginBottom="16dp" />
-
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerSuggestedRecipes"
+        android:id="@+id/recyclerAlmostThere"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />

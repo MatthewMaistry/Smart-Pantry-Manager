@@ -4,7 +4,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.widget.TextView;
-import android.content.Intent;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,15 +16,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SuggestedRecipesActivity extends AppCompatActivity {
+public class AlmostThereActivity extends AppCompatActivity {
 
     private DatabaseHelper databaseHelper;
 
-    private RecyclerView recyclerSuggestedRecipes;
-    private TextView txtNoRecipes;
+    private RecyclerView recyclerAlmostThere;
+    private TextView txtAlmostThereInfo;
 
     private RecipeAdapter recipeAdapter;
-    private List<Recipe> suggestedRecipes;
+    private List<Recipe> almostThereRecipes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,15 +32,16 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
         EdgeToEdge.enable(this);
 
-        setContentView(R.layout.activity_suggested_recipes);
+        setContentView(R.layout.activity_almost_there);
 
         ViewCompat.setOnApplyWindowInsetsListener(
                 findViewById(R.id.main),
                 (v, insets) -> {
 
-                    Insets systemBars = insets.getInsets(
-                            WindowInsetsCompat.Type.systemBars()
-                    );
+                    Insets systemBars =
+                            insets.getInsets(
+                                    WindowInsetsCompat.Type.systemBars()
+                            );
 
                     v.setPadding(
                             systemBars.left,
@@ -54,40 +54,32 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                 }
         );
 
-        recyclerSuggestedRecipes =
-                findViewById(R.id.recyclerSuggestedRecipes);
+        recyclerAlmostThere =
+                findViewById(R.id.recyclerAlmostThere);
 
-        txtNoRecipes =
-                findViewById(R.id.txtNoRecipes);
+        txtAlmostThereInfo =
+                findViewById(R.id.txtAlmostThereInfo);
 
-        recyclerSuggestedRecipes.setLayoutManager(
+        recyclerAlmostThere.setLayoutManager(
                 new LinearLayoutManager(this)
         );
 
-        suggestedRecipes = new ArrayList<>();
+        almostThereRecipes = new ArrayList<>();
 
         recipeAdapter =
-                new RecipeAdapter(suggestedRecipes);
+                new RecipeAdapter(almostThereRecipes);
 
-        recyclerSuggestedRecipes.setAdapter(recipeAdapter);
+        recyclerAlmostThere.setAdapter(recipeAdapter);
 
-        databaseHelper = new DatabaseHelper(this);
+        databaseHelper =
+                new DatabaseHelper(this);
 
-        loadSuggestedRecipes();
-        findViewById(R.id.btnAlmostThere).setOnClickListener(v -> {
-
-            Intent intent = new Intent(
-                    SuggestedRecipesActivity.this,
-                    AlmostThereActivity.class
-            );
-
-            startActivity(intent);
-        });
+        loadAlmostThereRecipes();
     }
 
-    private void loadSuggestedRecipes() {
+    private void loadAlmostThereRecipes() {
 
-        suggestedRecipes.clear();
+        almostThereRecipes.clear();
 
         SQLiteDatabase database =
                 databaseHelper.getReadableDatabase();
@@ -106,12 +98,16 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
                 int recipeId =
                         cursor.getInt(
-                                cursor.getColumnIndexOrThrow("id")
+                                cursor.getColumnIndexOrThrow(
+                                        "id"
+                                )
                         );
 
                 String recipeName =
                         cursor.getString(
-                                cursor.getColumnIndexOrThrow("name")
+                                cursor.getColumnIndexOrThrow(
+                                        "name"
+                                )
                         );
 
                 String instructions =
@@ -121,17 +117,21 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
                                 )
                         );
 
-                // Only add the recipe if every required
-                // ingredient is available.
-                if (recipeMatcher.canMakeRecipe(recipeId)) {
+                // Only add recipes that are missing exactly one ingredient.
+                if (recipeMatcher.isAlmostThere(recipeId)) {
 
-                    Recipe recipe = new Recipe(
-                            recipeId,
-                            recipeName,
-                            instructions
-                    );
+                    String missingIngredient =
+                            recipeMatcher.getMissingIngredient(recipeId);
 
-                    suggestedRecipes.add(recipe);
+                    Recipe recipe =
+                            new Recipe(
+                                    recipeId,
+                                    recipeName,
+                                    instructions,
+                                    missingIngredient
+                            );
+
+                    almostThereRecipes.add(recipe);
                 }
 
             } while (cursor.moveToNext());
@@ -141,16 +141,16 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
 
         recipeAdapter.notifyDataSetChanged();
 
-        if (suggestedRecipes.isEmpty()) {
+        if (almostThereRecipes.isEmpty()) {
 
-            txtNoRecipes.setText(
-                    "No recipes can be made with current pantry."
+            txtAlmostThereInfo.setText(
+                    "No recipes are missing only one ingredient."
             );
 
         } else {
 
-            txtNoRecipes.setText(
-                    "Recipes you can make with current pantry:"
+            txtAlmostThereInfo.setText(
+                    "These recipes are missing only one ingredient:"
             );
         }
     }
@@ -162,7 +162,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity {
         if (databaseHelper != null &&
                 recipeAdapter != null) {
 
-            loadSuggestedRecipes();
+            loadAlmostThereRecipes();
         }
     }
 }
