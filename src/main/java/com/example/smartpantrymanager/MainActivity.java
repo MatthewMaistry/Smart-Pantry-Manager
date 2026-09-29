@@ -49,5 +49,13 @@ public class MainActivity extends AppCompatActivity {
 
             startActivity(intent);
         });
+
+        findViewById(R.id.btnSettings).setOnClickListener(v -> {
+            Intent intent = new Intent(
+                    MainActivity.this,
+                    SettingsActivity.class
+            );
+            startActivity(intent);
+        });
     }
 }
