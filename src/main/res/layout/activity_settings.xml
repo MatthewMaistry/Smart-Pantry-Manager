@@ -15,6 +15,15 @@
         android:textStyle="bold"
         android:layout_marginBottom="24dp" />
 
+    <ImageView
+        android:id="@+id/imgSettings"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_marginBottom="20dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/settings_image"
+        android:contentDescription="Settings illustration" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
